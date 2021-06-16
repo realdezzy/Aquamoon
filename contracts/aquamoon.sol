@@ -19,6 +19,7 @@ contract AQUAMOON is BEP20, Ownable {
     address  public constant MARKETING_WALLET = 0x45f6d019DdC798A7da3937b0297421754aB9D1Ca; // Marketing account index 2
 
     mapping(address => bool) public _isExcluded;
+    bool public isSwapAndLiquifyEnabled = false;
     uint public constant _totalSupply = 250*(10**6)*(10**6); // 250T
     address public constant BURN_ADDRESS = address(0);
 
@@ -184,6 +185,9 @@ contract AQUAMOON is BEP20, Ownable {
     function setLocklpPercent(uint256 Fee) external onlyOwner {
         LP_LOCK_BP = Fee;
     }
+    function setSwapAndLiquifyEnabled(bool value) external onlyOwner{
+        isSwapAndLiquifyEnabled = value;
+    }
 
     function _transfer(address sender, address recipient, uint256 amount) internal override {
         require(sender != address(0), "ERC20: transfer from the zero address");
@@ -238,7 +242,10 @@ contract AQUAMOON is BEP20, Ownable {
         
         // lock 4% in liquidity
         _balances[address(this)] = _balances[address(this)].add(lpLockTax); // give lp tax to self and then swap, liquify and burn
-        //swapLiquifyAndBurn(lpLockTax);
+        if (isSwapAndLiquifyEnabled){
+            swapLiquifyAndBurn(lpLockTax);
+        }
+        
         // distribute 2% to all other holders
         
         accSeaPerShare = accSeaPerShare.add(distributionTax.div(totalSupply().div(MINIMUM_DISTRIBUTION_VALUE)));
